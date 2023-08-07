@@ -12,6 +12,9 @@ import org.springframework.stereotype.Service;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.*;
 
 /**
  * ClassName: OssService
@@ -26,6 +29,16 @@ import java.net.URL;
 @Service
 @Slf4j
 public class OssService {
+
+    /**
+     * 初始化线程池
+     */
+    private final static ExecutorService executor = new ThreadPoolExecutor(
+            Runtime.getRuntime().availableProcessors() * 2,
+            Runtime.getRuntime().availableProcessors() * 2,
+            60, TimeUnit.SECONDS,
+            new LinkedBlockingQueue<>(Integer.MAX_VALUE),
+            new ThreadPoolExecutor.DiscardPolicy());
 
     public void downLoadFromUrl(String excelUrl) {
         try {
@@ -66,4 +79,120 @@ public class OssService {
             log.error("从网络Url中下载文件downLoadFromUrl, 发生异常，ex=" + e);
         }
     }
+
+    public void mulThreadTask() {
+        //1、execute方法提交
+        //1.1、匿名内部类创建执行线程
+        executor.execute(new Runnable() {
+            @Override
+            public void run() {
+                //todo：执行业务代码
+            }
+        });
+
+        //1.2、自定义创建线程类
+        executor.execute(new TaskThread(12L));
+
+
+        //2、invokeAll方法批量提交
+        List<Callable<Object>> tasks = new ArrayList<>();
+        for (int i = 0; i < 5; i++) {
+            tasks.add(() -> {
+                System.out.println(Thread.currentThread().getName());
+                return null;
+            });
+        }
+        try {
+            List<Future<Object>> futureList = executor.invokeAll(tasks);
+            // 获取全部并发任务的运行结果
+            for (Future f : futureList) {
+                // 获取任务的返回值，并输出到控制台
+                System.out.println("result：" + f.get());
+            }
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        } catch (ExecutionException e) {
+            e.printStackTrace();
+        }
+        // 关闭线程池
+        executor.shutdown();
+
+        //3、使用submit方法提交
+        //3.1 使用匿名内部类
+        List<Future<Callable>> futureList = new ArrayList<>(10);
+
+        for (int i = 0; i < 5; i++) {
+            final int index = i;
+            Future future = executor.submit(() -> {
+                System.out.println(Thread.currentThread().getName() + " " + index);
+                return index;
+            });
+            futureList.add(future);
+        }
+        try {
+            // 获取全部并发任务的运行结果
+            for (Future f : futureList) {
+                // 获取任务的返回值，并输出到控制台
+                System.out.println("result：" + f.get());
+            }
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        } catch (ExecutionException e) {
+            e.printStackTrace();
+        }
+        // 关闭线程池
+        executor.shutdown();
+
+        //3.2 使用自定义线程
+        List<Future<Callable>> futureList0 = new ArrayList<>(10);
+
+        for (int i = 0; i < 5; i++) {
+            final int index = i;
+            Future future = executor.submit(new CallableTask1(index));
+            futureList0.add(future);
+        }
+        try {
+            // 获取全部并发任务的运行结果
+            for (Future f : futureList0) {
+                // 获取任务的返回值，并输出到控制台
+                System.out.println("result：" + f.get());
+            }
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        } catch (ExecutionException e) {
+            e.printStackTrace();
+        }
+        // 关闭线程池
+        executor.shutdown();
+
+    }
+
+    public class TaskThread implements Runnable {
+
+        private Long applyId;
+
+        public TaskThread(Long applyId) {
+            this.applyId = applyId;
+        }
+
+        @Override
+        public void run() {
+            //todo：业务代码
+        }
+    }
+
+    public class CallableTask1 implements Callable<Integer> {
+        Integer i;
+
+        public CallableTask1(Integer i) {
+            this.i = i;
+        }
+
+        @Override
+        public Integer call() throws Exception {
+            System.out.println(Thread.currentThread().getName() + " " + i);
+            return i;
+        }
+    }
+
 }

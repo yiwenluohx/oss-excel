@@ -7,6 +7,11 @@ import com.study.ossexcel.dto.DemoExtraDataDto;
 import com.study.ossexcel.listener.CodeFileListener;
 import com.study.ossexcel.listener.MergeExcelListener;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.http.HttpEntity;
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClients;
 import org.springframework.stereotype.Service;
 
 import java.io.InputStream;
@@ -42,6 +47,7 @@ public class OssService {
 
     public void downLoadFromUrl(String excelUrl) {
         try {
+            /*
             URL url = new URL(excelUrl);
             HttpURLConnection conn = (HttpURLConnection) url.openConnection();
             // 设置超时间为3秒
@@ -50,6 +56,16 @@ public class OssService {
             conn.setRequestProperty("User-Agent", "Mozilla/4.0 (compatible; MSIE 5.0; Windows NT; DigExt)");
             // 得到输入流
             InputStream inputStream = conn.getInputStream();
+             */
+
+            //将路径获取文件流的方式换为httpclient获取
+            CloseableHttpClient client = HttpClients.createDefault();
+            HttpGet get = new HttpGet(excelUrl);
+            CloseableHttpResponse response = client.execute(get);
+            HttpEntity entity = response.getEntity();
+            InputStream inputStream = entity.getContent();
+
+            //不变
             EasyExcel.read(inputStream, CodeFileDto.class, new CodeFileListener()).sheet().headRowNumber(2).doRead();
             if (inputStream != null) {
                 inputStream.close();

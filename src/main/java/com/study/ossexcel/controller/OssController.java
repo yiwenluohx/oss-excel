@@ -38,14 +38,14 @@ public class OssController {
     @GetMapping("/upload/excel")
     public Integer uploadExcel(@RequestParam("url") String url) throws Exception{
         //https://pic591.oss-cn-beijing.aliyuncs.com/codefile/code-20211212.xlsx
-//        ossService.downLoadFromUrl(url);
-        //读取excel多sheet并合并单元格的数据
+        ossService.downLoadFromUrl(url);
+//        读取excel多sheet并合并单元格的数据
 //        ossService.readExcelMerge(url);
 
         //导出excel，带下拉选择
-        String fileName = URLEncoder.encode("XXX模板导出", "UTF-8");
-        response.setHeader("Content-disposition", "attachment;filename=" + fileName + ".xlsx");
-        EasyExcel.write(response.getOutputStream(), UnitExcelDownVoOne.class).sheet("中职院校").registerWriteHandler(new CustomSheetWriteHandler()).doWrite(Lists.newArrayList());
+//        String fileName = URLEncoder.encode("XXX模板导出", "UTF-8");
+//        response.setHeader("Content-disposition", "attachment;filename=" + fileName + ".xlsx");
+//        EasyExcel.write(response.getOutputStream(), UnitExcelDownVoOne.class).sheet("中职院校").registerWriteHandler(new CustomSheetWriteHandler()).doWrite(Lists.newArrayList());
 
         return 1234;
     }
